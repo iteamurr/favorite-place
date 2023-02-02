@@ -5,11 +5,13 @@ from motor import motor_asyncio as async_mongo
 from pymongo import errors
 
 from favorite_place.config import settings
+from favorite_place.database import indexes
 
 
 class MongoClient:
     _db: str
     _client: async_mongo.AsyncIOMotorClient
+    indexes: list[indexes.BaseIndex] = [indexes.RecordUserIDPlaceIDUniqueIndex]
 
     def __new__(cls: MongoClient) -> MongoClient:
         if not hasattr(cls, "instance"):
@@ -41,6 +43,14 @@ class MongoClient:
         if self._client:
             self._client.close()
         logger.info(f"Connection to the '{self._db}' database has been closed.")
+
+    async def create_indexes(self) -> None:
+        for index in self.indexes:
+            await self._client[self._db][index.collection].create_indexes(
+                [index.to_index_model()]
+            )
+        if len(self.indexes) > 0:
+            logger.info(f"Indexes for the database '{self._db}' have been created.")
 
     def get_client(self) -> async_mongo.AsyncIOMotorClient:
         return self._client

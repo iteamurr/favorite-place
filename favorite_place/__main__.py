@@ -24,6 +24,7 @@ mongo_client = config.get_mongo_client()
 @application.on_event("startup")
 async def startup_event():
     await mongo_client.on_startup(mongo_settings)
+    await mongo_client.create_indexes()
 
 
 @application.on_event("shutdown")
