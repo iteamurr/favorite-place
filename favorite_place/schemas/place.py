@@ -3,6 +3,7 @@ import uuid
 import pydantic
 
 from favorite_place.database.models import place as place_models
+from favorite_place.schemas import record as record_schemas
 
 
 class PlaceAddRequest(pydantic.BaseModel):
@@ -24,10 +25,18 @@ class PlaceUpdateRequest(pydantic.BaseModel):
 
 
 class PlaceInfoResponse(pydantic.BaseModel):
-    id: uuid.UUID = pydantic.Field(..., example="f2828ba8-d02f-447e-9661-188d0bde3770")
+    id: uuid.UUID = pydantic.Field(...)
     name: str = pydantic.Field(..., example="Riverview Park")
     location: place_models.PlaceLocation = pydantic.Field(...)
+    rating: float | None = pydantic.Field(ge=1, le=10)
+    last_records: list[record_schemas.RecordPlaceInfoResponse] | None
 
 
 class PlaceAddResponse(pydantic.BaseModel):
-    id: uuid.UUID = pydantic.Field(..., example="f2828ba8-d02f-447e-9661-188d0bde3770")
+    id: uuid.UUID = pydantic.Field(...)
+
+
+class PlaceUpdateResponse(pydantic.BaseModel):
+    id: uuid.UUID = pydantic.Field(...)
+    name: str = pydantic.Field(..., example="Susquehannock State Forest")
+    location: place_models.PlaceLocation = pydantic.Field(...)

@@ -21,10 +21,10 @@ class UserUpdateRequest(pydantic.BaseModel):
 
 
 class UserInfoResponse(pydantic.BaseModel):
-    id: uuid.UUID = pydantic.Field(..., example="980cf906-b892-4afb-8b01-cd9427a4cd2b")
+    id: uuid.UUID = pydantic.Field(...)
     name: user_models.UserName = pydantic.Field(...)
     location: user_models.UserLocation | None
 
 
 class UserAddResponse(pydantic.BaseModel):
-    id: uuid.UUID = pydantic.Field(..., example="980cf906-b892-4afb-8b01-cd9427a4cd2b")
+    id: uuid.UUID = pydantic.Field(...)

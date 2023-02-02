@@ -8,8 +8,10 @@ from pymongo import errors as mongo_errors
 
 from favorite_place import config
 from favorite_place.database.crud import place as place_crud
+from favorite_place.database.crud import record as record_crud
 from favorite_place.schemas import errors
 from favorite_place.schemas import place as place_schemas
+from favorite_place.schemas import record as record_schemas
 from favorite_place.utils import responses
 
 
@@ -53,14 +55,26 @@ async def get_place(
     place_id: uuid.UUID,
     db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
 ) -> place_schemas.PlaceInfoResponse:
-    if (db_place := await place_crud.get_place_by_id(db, place_id)) is not None:
-        return place_schemas.PlaceInfoResponse(**db_place.dict())
-    raise errors.NotFound("Couldn't find a place with the specified id.")
+    if (db_place := await place_crud.get_place_by_id(db, place_id)) is None:
+        raise errors.NotFound("Couldn't find a place with the specified id.")
+
+    place_info = db_place.dict(exclude={"rating"})
+    if (db_place.rating is not None) and (db_place.rating.number > 0):
+        place_info["rating"] = round(db_place.rating.sum / db_place.rating.number, 1)
+
+    db_records = await record_crud.get_last_records(db, place_id)
+    if len(db_records) > 0:
+        place_info["last_records"] = [
+            record_schemas.RecordPlaceInfoResponse(**db_record.dict(exclude_none=True))
+            for db_record in db_records
+        ]
+
+    return place_schemas.PlaceInfoResponse(**place_info)
 
 
 @router.put(
     "/place/{place_id}",
-    response_model=place_schemas.PlaceInfoResponse,
+    response_model=place_schemas.PlaceUpdateResponse,
     response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     responses=responses.get_responses(errors.NotFound),
@@ -70,12 +84,12 @@ async def update_place(
     place_id: uuid.UUID,
     place: place_schemas.PlaceUpdateRequest = fastapi.Body(...),
     db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
-) -> place_schemas.PlaceInfoResponse:
+) -> place_schemas.PlaceUpdateResponse:
     if (await place_crud.get_place_by_id(db, place_id)) is None:
         raise errors.NotFound("Couldn't find a place with the specified id.")
     await place_crud.update_place(db, place_id, place.dict(exclude_none=True))
     db_place = await place_crud.get_place_by_id(db, place_id)
-    return place_schemas.PlaceInfoResponse(**db_place.dict())
+    return place_schemas.PlaceUpdateResponse(**db_place.dict())
 
 
 @router.delete(

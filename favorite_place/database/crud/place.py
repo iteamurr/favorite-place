@@ -35,6 +35,18 @@ async def update_place(
     return update_res.modified_count == 1
 
 
+async def update_place_rating(
+    db: async_mongo.AsyncIOMotorDatabase,
+    place_id: uuid.UUID,
+    rating: int,
+) -> bool:
+    update_res = await db.places.update_one(
+        {"_id": place_id},
+        {"$inc": {"rating.sum": rating, "rating.number": 1}},
+    )
+    return update_res.modified_count == 1
+
+
 async def delete_place(
     db: async_mongo.AsyncIOMotorDatabase,
     place_id: uuid.UUID,

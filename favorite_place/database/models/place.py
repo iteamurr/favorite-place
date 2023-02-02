@@ -15,17 +15,22 @@ class PlaceLocation(pydantic.BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "city": "Hannibal",
-                "state": "Missouri",
-                "country": "United States",
-                "coordinates": [-91.3713601, 39.7249375],
+                "city": "London",
+                "country": "United Kingdom",
+                "coordinates": [-0.156667, 51.532222],
             }
         }
 
 
+class PlaceRating(pydantic.BaseModel):
+    sum: int = pydantic.Field(...)
+    number: int = pydantic.Field(...)
+
+
 class Place(pydantic.BaseModel):
     id: uuid.UUID = pydantic.Field(default_factory=uuid.uuid4, alias="_id")
-    name: str = pydantic.Field(..., min_length=1, example="Riverview Park")
+    name: str = pydantic.Field(..., min_length=1, example="Regent's Park")
+    rating: PlaceRating | None
     location: PlaceLocation = pydantic.Field(...)
 
     class Config:
