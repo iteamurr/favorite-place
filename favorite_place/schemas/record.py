@@ -34,10 +34,22 @@ class RecordAddRequest(pydantic.BaseModel):
 
 
 class RecordPlaceInfoResponse(pydantic.BaseModel):
+    record_id: uuid.UUID = pydantic.Field(...)
     user_id: uuid.UUID = pydantic.Field(...)
     rating: int = pydantic.Field(..., ge=1, le=10)
+    creation_date: datetime.datetime = pydantic.Field(...)
     feedback: str | None = pydantic.Field(example="My favorite place!")
-    creation_date: datetime.datetime | None
+
+
+class RecordUserInfoResponse(pydantic.BaseModel):
+    record_id: uuid.UUID = pydantic.Field(...)
+    place_id: uuid.UUID = pydantic.Field(...)
+    place_name: str = pydantic.Field(..., example="Riverview Park")
+    rating: int = pydantic.Field(..., ge=1, le=10)
+    status: record_models.RecordStatus = pydantic.Field(...)
+    creation_date: datetime.datetime = pydantic.Field(...)
+    visit_date: datetime.date | None
+    feedback: str | None = pydantic.Field(example="My favorite place!")
 
 
 class RecordAddResponse(pydantic.BaseModel):

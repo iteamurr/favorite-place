@@ -3,6 +3,7 @@ import uuid
 import pydantic
 
 from favorite_place.database.models import user as user_models
+from favorite_place.schemas import record as record_schemas
 
 
 class UserAddRequest(pydantic.BaseModel):
@@ -24,7 +25,14 @@ class UserInfoResponse(pydantic.BaseModel):
     id: uuid.UUID = pydantic.Field(...)
     name: user_models.UserName = pydantic.Field(...)
     location: user_models.UserLocation | None
+    top_places: list[record_schemas.RecordUserInfoResponse] | None
 
 
 class UserAddResponse(pydantic.BaseModel):
     id: uuid.UUID = pydantic.Field(...)
+
+
+class UserUpdateResponse(pydantic.BaseModel):
+    id: uuid.UUID = pydantic.Field(...)
+    name: user_models.UserName = pydantic.Field(...)
+    location: user_models.UserLocation | None

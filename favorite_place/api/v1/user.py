@@ -7,6 +7,7 @@ from motor import motor_asyncio as async_mongo
 from pymongo import errors as mongo_errors
 
 from favorite_place import config
+from favorite_place.database.crud import record as record_crud
 from favorite_place.database.crud import user as user_crud
 from favorite_place.schemas import errors
 from favorite_place.schemas import user as user_schemas
@@ -53,14 +54,19 @@ async def get_user(
     user_id: uuid.UUID,
     db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
 ) -> user_schemas.UserInfoResponse:
-    if (db_user := await user_crud.get_user_by_id(db, user_id)) is not None:
-        return user_schemas.UserInfoResponse(**db_user.dict())
-    raise errors.NotFound("Couldn't find a user with the specified id.")
+    if (db_user := await user_crud.get_user_by_id(db, user_id)) is None:
+        raise errors.NotFound("Couldn't find a user with the specified id.")
+
+    user_info = db_user.dict()
+    if len(records := await record_crud.get_top_rated_records_by_user(db, user_id)) > 0:
+        user_info["top_places"] = records
+
+    return user_schemas.UserInfoResponse(**user_info)
 
 
 @router.put(
     "/user/{user_id}",
-    response_model=user_schemas.UserInfoResponse,
+    response_model=user_schemas.UserUpdateResponse,
     response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
     responses=responses.get_responses(errors.NotFound),
@@ -70,12 +76,12 @@ async def update_user(
     user_id: uuid.UUID,
     user: user_schemas.UserUpdateRequest = fastapi.Body(...),
     db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
-) -> user_schemas.UserInfoResponse:
+) -> user_schemas.UserUpdateResponse:
     if (await user_crud.get_user_by_id(db, user_id)) is None:
         raise errors.NotFound("Couldn't find a user with the specified id.")
     await user_crud.update_user(db, user_id, user.dict(exclude_none=True))
     db_user = await user_crud.get_user_by_id(db, user_id)
-    return user_schemas.UserInfoResponse(**db_user.dict())
+    return user_schemas.UserUpdateResponse(**db_user.dict())
 
 
 @router.delete(

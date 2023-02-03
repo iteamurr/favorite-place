@@ -11,7 +11,6 @@ from favorite_place.database.crud import place as place_crud
 from favorite_place.database.crud import record as record_crud
 from favorite_place.schemas import errors
 from favorite_place.schemas import place as place_schemas
-from favorite_place.schemas import record as record_schemas
 from favorite_place.utils import responses
 
 
@@ -61,13 +60,8 @@ async def get_place(
     place_info = db_place.dict(exclude={"rating"})
     if (db_place.rating is not None) and (db_place.rating.number > 0):
         place_info["rating"] = round(db_place.rating.sum / db_place.rating.number, 1)
-
-    db_records = await record_crud.get_last_records(db, place_id)
-    if len(db_records) > 0:
-        place_info["last_records"] = [
-            record_schemas.RecordPlaceInfoResponse(**db_record.dict(exclude_none=True))
-            for db_record in db_records
-        ]
+    if len(db_records := await record_crud.get_last_records(db, place_id)) > 0:
+        place_info["last_records"] = db_records
 
     return place_schemas.PlaceInfoResponse(**place_info)
 
