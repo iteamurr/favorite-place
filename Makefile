@@ -16,6 +16,11 @@ to_db: # Exec the db.
 		docker compose exec mongodb mongosh --username favorite_place_agent --password favorite_place_password
 
 
+.PHONY: createsuperuser
+createsuperuser: # Create superuser.
+		@poetry run python $(APPLICATION_NAME)/utils/createsuperuser.py
+
+
 .PHONY: nice
 nice: # Format the code.
 		poetry run isort $(APPLICATION_NAME)/ && poetry run black $(APPLICATION_NAME)/
