@@ -8,6 +8,9 @@ from favorite_place.schemas import record as record_schemas
 
 class UserAddRequest(pydantic.BaseModel):
     name: user_models.UserName = pydantic.Field(...)
+    username: str = pydantic.Field(...)
+    password: str = pydantic.Field(...)
+    scopes: list[user_models.UserScopes] | None
     location: user_models.UserLocation | None
 
 

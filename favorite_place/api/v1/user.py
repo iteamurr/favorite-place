@@ -6,11 +6,12 @@ from loguru import logger
 from motor import motor_asyncio as async_mongo
 from pymongo import errors as mongo_errors
 
-from favorite_place import config
 from favorite_place.database.crud import record as record_crud
 from favorite_place.database.crud import user as user_crud
+from favorite_place.dependencies import database as db_depends
 from favorite_place.schemas import errors
 from favorite_place.schemas import user as user_schemas
+from favorite_place.services import auth as auth_services
 from favorite_place.utils import responses
 
 
@@ -26,10 +27,13 @@ router = fastapi.APIRouter()
 )
 async def add_user(
     user: user_schemas.UserAddRequest = fastapi.Body(...),
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> user_schemas.UserAddResponse:
+    user_info = user.dict(exclude={"password"}, exclude_none=True)
+    user_info["hashed_password"] = auth_services.get_password_hash(user.password)
+
     try:
-        user_id = await user_crud.create_user(db, user.dict(exclude_none=True))
+        user_id = await user_crud.create_user(db, user_info)
     except mongo_errors.DuplicateKeyError:
         raise errors.Conflict(
             "The request could not be completed due to a conflict. "
@@ -52,7 +56,7 @@ async def add_user(
 )
 async def get_user(
     user_id: uuid.UUID,
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> user_schemas.UserInfoResponse:
     if (db_user := await user_crud.get_user_by_id(db, user_id)) is None:
         raise errors.NotFound("Couldn't find a user with the specified id.")
@@ -75,7 +79,7 @@ async def get_user(
 async def update_user(
     user_id: uuid.UUID,
     user: user_schemas.UserUpdateRequest = fastapi.Body(...),
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> user_schemas.UserUpdateResponse:
     if (await user_crud.get_user_by_id(db, user_id)) is None:
         raise errors.NotFound("Couldn't find a user with the specified id.")
@@ -92,7 +96,7 @@ async def update_user(
 )
 async def delete_user(
     user_id: uuid.UUID,
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> fastapi.Response:
     if await user_crud.delete_user(db, user_id):
         return fastapi.Response(status_code=status.HTTP_204_NO_CONTENT)

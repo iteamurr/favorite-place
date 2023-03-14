@@ -23,6 +23,15 @@ async def get_user_by_id(
     return None
 
 
+async def get_user_by_username(
+    db: async_mongo.AsyncIOMotorDatabase,
+    username: str,
+) -> user_models.User | None:
+    if (db_user := await db.users.find_one({"username": username})) is not None:
+        return user_models.User(**db_user)
+    return None
+
+
 async def update_user(
     db: async_mongo.AsyncIOMotorDatabase,
     user_id: uuid.UUID,

@@ -6,9 +6,9 @@ from loguru import logger
 from motor import motor_asyncio as async_mongo
 from pymongo import errors as mongo_errors
 
-from favorite_place import config
 from favorite_place.database.crud import place as place_crud
 from favorite_place.database.crud import record as record_crud
+from favorite_place.dependencies import database as db_depends
 from favorite_place.schemas import errors
 from favorite_place.schemas import place as place_schemas
 from favorite_place.utils import responses
@@ -26,7 +26,7 @@ router = fastapi.APIRouter()
 )
 async def add_place(
     place: place_schemas.PlaceAddRequest = fastapi.Body(...),
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> place_schemas.PlaceAddResponse:
     try:
         place_id = await place_crud.create_place(db, place.dict(exclude_none=True))
@@ -52,7 +52,7 @@ async def add_place(
 )
 async def get_place(
     place_id: uuid.UUID,
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> place_schemas.PlaceInfoResponse:
     if (db_place := await place_crud.get_place_by_id(db, place_id)) is None:
         raise errors.NotFound("Couldn't find a place with the specified id.")
@@ -77,7 +77,7 @@ async def get_place(
 async def update_place(
     place_id: uuid.UUID,
     place: place_schemas.PlaceUpdateRequest = fastapi.Body(...),
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> place_schemas.PlaceUpdateResponse:
     if (await place_crud.get_place_by_id(db, place_id)) is None:
         raise errors.NotFound("Couldn't find a place with the specified id.")
@@ -94,7 +94,7 @@ async def update_place(
 )
 async def delete_place(
     place_id: uuid.UUID,
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> fastapi.Response:
     if await place_crud.delete_place(db, place_id):
         return fastapi.Response(status_code=status.HTTP_204_NO_CONTENT)

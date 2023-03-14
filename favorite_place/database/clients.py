@@ -11,7 +11,10 @@ from favorite_place.database import indexes
 class MongoClient:
     _db: str
     _client: async_mongo.AsyncIOMotorClient
-    indexes: list[indexes.BaseIndex] = [indexes.RecordUserIDPlaceIDUniqueIndex]
+    indexes: list[indexes.BaseIndex] = [
+        indexes.RecordUserIDPlaceIDUniqueIndex,
+        indexes.UserUsernameUniqueIndex,
+    ]
 
     def __new__(cls: MongoClient) -> MongoClient:
         if not hasattr(cls, "instance"):

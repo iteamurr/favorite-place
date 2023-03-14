@@ -5,9 +5,9 @@ from motor import motor_asyncio as async_mongo
 from pymongo import errors as mongo_errors
 from starlette import status
 
-from favorite_place import config
 from favorite_place.database.crud import place as place_crud
 from favorite_place.database.crud import record as record_crud
+from favorite_place.dependencies import database as db_depends
 from favorite_place.schemas import errors
 from favorite_place.schemas import record as record_schemas
 from favorite_place.utils import responses
@@ -26,7 +26,7 @@ router = fastapi.APIRouter()
 async def add_record(
     place_id: uuid.UUID,
     record: record_schemas.RecordAddRequest = fastapi.Body(...),
-    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(config.get_mongodb),
+    db: async_mongo.AsyncIOMotorDatabase = fastapi.Depends(db_depends.get_mongodb),
 ) -> record_schemas.RecordAddResponse:
     if (await place_crud.get_place_by_id(db, place_id)) is None:
         raise errors.NotFound("Couldn't find a place with the specified id.")

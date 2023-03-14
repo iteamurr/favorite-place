@@ -3,6 +3,7 @@ import pymongo
 
 from favorite_place.database.models import common as common_models
 from favorite_place.database.models import record as record_models
+from favorite_place.database.models import user as user_models
 
 
 IndexField = tuple[str, common_models.MongoDirections]
@@ -38,5 +39,15 @@ class RecordUserIDPlaceIDUniqueIndex(BaseIndex):
     fields: list[IndexField] = [
         ("place_id", common_models.MongoDirections.ASCENDING.value),
         ("user_id", common_models.MongoDirections.ASCENDING.value),
+    ]
+    unique: bool = True
+
+
+class UserUsernameUniqueIndex(BaseIndex):
+    model: pydantic.BaseModel = user_models.User
+    collection: str = "users"
+    name: str = "user_username_unique_index"
+    fields: list[IndexField] = [
+        ("username", common_models.MongoDirections.ASCENDING.value)
     ]
     unique: bool = True

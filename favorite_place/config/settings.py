@@ -30,3 +30,12 @@ class RedisSettings(BaseSettings):
 
     class Config(BaseSettings.Config):
         env_prefix = "REDIS_"
+
+
+class OAuth2Settings(BaseSettings):
+    secret_key: str
+    algorithm: str
+    access_token_expire_minutes: int
+
+    class Config(BaseSettings.Config):
+        env_prefix = "OAUTH2_"
